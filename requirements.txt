@@ -1,0 +1,11 @@
+pandas
+duckdb
+datasets
+python-dotenv
+pytest
+streamlit
+fastmcp
+langgraph
+langchain
+anthropic
+pydantic
