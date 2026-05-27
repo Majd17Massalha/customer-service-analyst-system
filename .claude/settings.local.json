@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/python.exe src/data/ingest.py)",
+      "Bash(.venv/Scripts/pip.exe install *)",
+      "Bash(wait *)",
+      "Bash(.venv/Scripts/python.exe -c ' *)",
+      "Bash(.venv/Scripts/python.exe -m pytest tests/test_tools.py -v)"
+    ]
+  }
+}

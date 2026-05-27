@@ -1,0 +1,33 @@
+2026-05-28 01:05:08,193 [INFO] Loading dataset: bitext/Bitext-customer-support-llm-chatbot-training-dataset
+2026-05-28 01:05:09,090 [INFO] HTTP Request: HEAD https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+2026-05-28 01:05:09,092 [WARNING] Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-05-28 01:05:09,106 [INFO] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/430d1a89bd93bd1fa23c16f29dd53e73f0087443/README.md "HTTP/1.1 200 OK"
+2026-05-28 01:05:09,140 [INFO] HTTP Request: GET https://huggingface.co/api/resolve-cache/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/430d1a89bd93bd1fa23c16f29dd53e73f0087443/README.md "HTTP/1.1 200 OK"
+2026-05-28 01:05:09,327 [INFO] HTTP Request: HEAD https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/resolve/430d1a89bd93bd1fa23c16f29dd53e73f0087443/Bitext-customer-support-llm-chatbot-training-dataset.py "HTTP/1.1 404 Not Found"
+2026-05-28 01:05:09,972 [INFO] HTTP Request: HEAD https://s3.amazonaws.com/datasets.huggingface.co/datasets/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/bitext/Bitext-customer-support-llm-chatbot-training-dataset.py "HTTP/1.1 404 Not Found"
+2026-05-28 01:05:10,154 [INFO] HTTP Request: GET https://huggingface.co/api/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/revision/430d1a89bd93bd1fa23c16f29dd53e73f0087443 "HTTP/1.1 200 OK"
+2026-05-28 01:05:10,305 [INFO] HTTP Request: HEAD https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/resolve/430d1a89bd93bd1fa23c16f29dd53e73f0087443/.huggingface.yaml "HTTP/1.1 404 Not Found"
+2026-05-28 01:05:10,666 [INFO] HTTP Request: GET https://datasets-server.huggingface.co/info?dataset=bitext/Bitext-customer-support-llm-chatbot-training-dataset "HTTP/1.1 200 OK"
+2026-05-28 01:05:10,836 [INFO] HTTP Request: GET https://huggingface.co/api/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/tree/430d1a89bd93bd1fa23c16f29dd53e73f0087443/data?recursive=true&expand=false "HTTP/1.1 404 Not Found"
+2026-05-28 01:05:11,001 [INFO] HTTP Request: GET https://huggingface.co/api/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/tree/430d1a89bd93bd1fa23c16f29dd53e73f0087443?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-05-28 01:05:11,420 [INFO] HTTP Request: HEAD https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/resolve/430d1a89bd93bd1fa23c16f29dd53e73f0087443/dataset_infos.json "HTTP/1.1 404 Not Found"
+2026-05-28 01:05:11,602 [INFO] HTTP Request: HEAD https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/resolve/430d1a89bd93bd1fa23c16f29dd53e73f0087443/Bitext_Sample_Customer_Support_Training_Dataset_27K_responses-v11.csv "HTTP/1.1 302 Found"
+2026-05-28 01:05:11,817 [INFO] HTTP Request: GET https://huggingface.co/api/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/xet-read-token/430d1a89bd93bd1fa23c16f29dd53e73f0087443 "HTTP/1.1 200 OK"
+2026-05-28 01:05:14,094 [INFO] Saving dataset to DuckDB: C:\Users\majdm\OneDrive\מסמכים\customer_service_analyst_agent\outputs\customer_support.duckdb
+2026-05-28 01:05:14,469 [INFO] Saved table 'customer_support_train': 26872 rows
+2026-05-28 01:05:14,844 [INFO] DuckDB written to: C:\Users\majdm\OneDrive\מסמכים\customer_service_analyst_agent\outputs\customer_support.duckdb
+2026-05-28 01:21:42,070 [INFO] Loading dataset: bitext/Bitext-customer-support-llm-chatbot-training-dataset
+2026-05-28 01:21:42,658 [INFO] HTTP Request: HEAD https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+2026-05-28 01:21:42,660 [WARNING] Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-05-28 01:21:42,676 [INFO] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/430d1a89bd93bd1fa23c16f29dd53e73f0087443/README.md "HTTP/1.1 200 OK"
+2026-05-28 01:21:42,856 [INFO] HTTP Request: HEAD https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/resolve/430d1a89bd93bd1fa23c16f29dd53e73f0087443/Bitext-customer-support-llm-chatbot-training-dataset.py "HTTP/1.1 404 Not Found"
+2026-05-28 01:21:43,463 [INFO] HTTP Request: HEAD https://s3.amazonaws.com/datasets.huggingface.co/datasets/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/bitext/Bitext-customer-support-llm-chatbot-training-dataset.py "HTTP/1.1 404 Not Found"
+2026-05-28 01:21:43,625 [INFO] HTTP Request: GET https://huggingface.co/api/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/revision/430d1a89bd93bd1fa23c16f29dd53e73f0087443 "HTTP/1.1 200 OK"
+2026-05-28 01:21:43,803 [INFO] HTTP Request: HEAD https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/resolve/430d1a89bd93bd1fa23c16f29dd53e73f0087443/.huggingface.yaml "HTTP/1.1 404 Not Found"
+2026-05-28 01:21:44,023 [INFO] HTTP Request: GET https://datasets-server.huggingface.co/info?dataset=bitext/Bitext-customer-support-llm-chatbot-training-dataset "HTTP/1.1 200 OK"
+2026-05-28 01:21:44,183 [INFO] HTTP Request: GET https://huggingface.co/api/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/tree/430d1a89bd93bd1fa23c16f29dd53e73f0087443/data?recursive=true&expand=false "HTTP/1.1 404 Not Found"
+2026-05-28 01:21:44,347 [INFO] HTTP Request: GET https://huggingface.co/api/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/tree/430d1a89bd93bd1fa23c16f29dd53e73f0087443?recursive=false&expand=false "HTTP/1.1 200 OK"
+2026-05-28 01:21:44,630 [INFO] HTTP Request: HEAD https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset/resolve/430d1a89bd93bd1fa23c16f29dd53e73f0087443/dataset_infos.json "HTTP/1.1 404 Not Found"
+2026-05-28 01:21:44,723 [INFO] Saving dataset to DuckDB: C:\Users\majdm\OneDrive\מסמכים\customer_service_analyst_agent\outputs\customer_support.duckdb
+2026-05-28 01:21:44,913 [INFO] Saved table 'customer_support_train': 26872 rows
+2026-05-28 01:21:45,087 [INFO] DuckDB written to: C:\Users\majdm\OneDrive\מסמכים\customer_service_analyst_agent\outputs\customer_support.duckdb
