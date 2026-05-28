@@ -1,12 +1,23 @@
 # Customer Service Analyst Agent
 
-A production-oriented AI analyst agent for the Bitext Customer Support dataset. Answers structured analytical questions (counts, distributions, filters) and open-ended summarization questions deterministically, with explicit refusal for out-of-scope queries and clarification prompts for ambiguous input.
+A production-oriented AI analyst agent for the Bitext Customer Support dataset. The system answers structured analytical questions (counts, distributions, filters) and open-ended summarization requests deterministically, while explicitly refusing out-of-scope queries and requesting clarification for ambiguous input.
 
 ---
 
 ## Executive Summary
 
-This system routes natural-language queries to one of four execution paths — structured analytics, unstructured summarization, out-of-scope refusal, or clarification request — using a deterministic keyword-based router with no LLM dependency at the routing or analytics layer. Numerical answers are computed exclusively by DuckDB. The LLM layer is reserved for response formatting and summarization only.
+This system routes natural-language queries to one of four execution paths — structured analytics, unstructured summarization, out-of-scope refusal, or clarification request — using a deterministic keyword-based router with no LLM dependency at the routing or analytics layer.
+
+Numerical answers are computed exclusively by DuckDB. Natural-language response formatting and extractive summarization are handled locally without external LLM API calls.
+
+The architecture emphasizes:
+
+* deterministic analytics
+* security and governance boundaries
+* operational observability
+* bounded memory
+* adversarial robustness
+* validation-driven AI engineering
 
 ---
 
@@ -23,7 +34,7 @@ Customer service analysts need to interrogate large support datasets without wri
 - Persistent session and profile memory across conversations
 - Structured observability: every route decision and tool call is logged
 - Production-style security: parameterized queries, input validation, no data leakage
-- Modular, testable architecture with 155 passing tests
+- Modular, testable architecture with 232 passing tests
 
 ---
 
@@ -221,8 +232,8 @@ Answer    : I can only answer questions about the customer support dataset. That
 
 - No real-time data: the dataset is a static Bitext snapshot (26,872 synthetic rows)
 - No LLM-backed summarization: unstructured answers are extractive, not generative
-- No semantic search: keyword search uses substring matching, not embeddings
-- No multi-turn conversation: each query is evaluated independently
+- No semantic search by design: the current system intentionally uses deterministic keyword-based retrieval instead of embedding-based semantic search.
+- Limited conversational continuity: the system persists lightweight session metadata, but does not yet support deep conversational reasoning or semantic long-term memory.
 - No authentication: sessions are identified by user-supplied string IDs
 - No horizontal scale: single-process, single-file DuckDB
 
@@ -254,3 +265,38 @@ A planner node could be introduced upstream of the current router for complex mu
 - Trend analysis across intent distribution over time
 - Exportable analytics reports (CSV, JSON)
 - Multi-session aggregation for team-level dashboards
+
+
+## AI-Assisted Development
+
+Claude Code was used as an engineering copilot rather than an autonomous generator.
+
+All major architectural and implementation changes were:
+
+* reviewed manually
+* validated through regression tests
+* verified through CLI execution
+* audited for architectural consistency and security boundaries
+
+Incorrect AI-generated behavior was intentionally preserved in the development history as part of the validation process. For example:
+
+* a routing bug incorrectly mapped "How many ORDER requests?" to `count_total_rows`
+* manual validation identified the regression
+* regression tests were added before the fix was accepted
+
+This workflow emphasized deterministic validation over blind acceptance of AI-generated code.
+
+
+## Evaluation & Governance
+
+The project includes:
+
+* human evaluation datasets
+* adversarial query testing
+* security validation
+* governance documentation
+* operational trace auditing
+* failure-mode analysis
+* LLM-as-a-Judge evaluation templates (non-executed, advisory only)
+
+Deterministic analytics remain the source of truth for all numerical outputs.
