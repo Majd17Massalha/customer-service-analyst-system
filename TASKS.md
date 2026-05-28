@@ -23,14 +23,25 @@
   - `docs/failure_modes.md` — query/memory/infrastructure/behavioral failure modes with mitigations
   - All 155 tests continue to pass
 
+- [x] Task 8: Evaluation, security, governance, and robustness harness
+  - `src/evaluation/golden_dataset.py` — 33 entries across STRUCTURED, UNSTRUCTURED, OUT_OF_SCOPE, CLARIFICATION, ADVERSARIAL, MALFORMED categories
+  - `src/evaluation/eval_metrics.py` — deterministic pass rate, route accuracy, per-category metrics
+  - `src/evaluation/manual_review.py` — human scoring framework (1–5 rubric, CSV/JSON export)
+  - `src/evaluation/llm_judge_template.py` — advisory LLM judge template (no API calls)
+  - `tests/test_adversarial_queries.py` — 31 adversarial and injection tests
+  - `tests/test_failure_modes.py` — 21 failure mode and graceful degradation tests
+  - `tests/test_security_edges.py` — 24 security boundary and data leakage tests
+  - `docs/evaluation_plan.md` — human evaluation framework, scoring rubric, per-route criteria
+  - `docs/security_audit.md` — SQL injection, memory leakage, session sanitization, trace boundaries
+  - `docs/adversarial_cases.md` — 16 adversarial case inventory with mitigations and residual risks
+  - `docs/system_reliability.md` — 15 failure modes with detection, fallback, and risk level
+  - `docs/data_analysis.md` — category/intent distribution, noise analysis, RAG implications
+  - `docs/prompts_and_iterations.md` — Task 8 governance reflection, future RAG design, PLAN MODE proposal, auditability
+
 ## Next
 
-- [ ] Task 8: Persistent follow-up memory behavior
-  - Resolve ambiguous follow-up queries ("show me more", "those") using session context
-  - Implement safe context substitution from `last_route`, `last_category`, `last_keyword`
-  - Add clarification loop: ask once, retry with resolved context
 - [ ] Task 9 (Optional): Smart RAG extension
   - Semantic retrieval for open-ended queries not served by keyword search
   - Embedding layer over `instruction` column (FAISS or similar)
   - Gated behind an `unstructured_semantic` route; never replaces deterministic analytics
-  - See `docs/engineering_decisions.md` sections 8 and 9 for rationale
+  - See `docs/engineering_decisions.md` sections 8 and 9 and `docs/data_analysis.md` for rationale
