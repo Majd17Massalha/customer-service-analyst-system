@@ -14,8 +14,8 @@ from src.agent.nodes import (
     node_clarification_response,
     node_out_of_scope_response,
     node_route_query,
-    node_structured_placeholder,
-    node_unstructured_placeholder,
+    node_structured_dispatch,
+    node_unstructured_retrieval,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,8 +33,8 @@ def build_graph():
     g = StateGraph(AgentState)
 
     g.add_node("route_query", node_route_query)
-    g.add_node("structured_placeholder", node_structured_placeholder)
-    g.add_node("unstructured_placeholder", node_unstructured_placeholder)
+    g.add_node("structured_dispatch", node_structured_dispatch)
+    g.add_node("unstructured_retrieval", node_unstructured_retrieval)
     g.add_node("out_of_scope_response", node_out_of_scope_response)
     g.add_node("clarification_response", node_clarification_response)
 
@@ -43,14 +43,14 @@ def build_graph():
         "route_query",
         _select_route,
         {
-            "structured": "structured_placeholder",
-            "unstructured": "unstructured_placeholder",
+            "structured": "structured_dispatch",
+            "unstructured": "unstructured_retrieval",
             "out_of_scope": "out_of_scope_response",
             "needs_clarification": "clarification_response",
         },
     )
-    g.add_edge("structured_placeholder", END)
-    g.add_edge("unstructured_placeholder", END)
+    g.add_edge("structured_dispatch", END)
+    g.add_edge("unstructured_retrieval", END)
     g.add_edge("out_of_scope_response", END)
     g.add_edge("clarification_response", END)
 

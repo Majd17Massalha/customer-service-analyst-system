@@ -137,14 +137,14 @@ def _initial_state(query: str) -> dict:
 def test_graph_structured(app):
     state = app.invoke(_initial_state("How many refund requests?"))
     assert state["route_result"].route == "structured"
-    assert "PLACEHOLDER" in state["response"]
+    assert state["final_answer"] is not None
     assert any("[route_query]" in t for t in state["trace"])
 
 
 def test_graph_unstructured(app):
     state = app.invoke(_initial_state("Summarize the FEEDBACK category."))
     assert state["route_result"].route == "unstructured"
-    assert "PLACEHOLDER" in state["response"]
+    assert state["final_answer"] is not None
 
 
 def test_graph_out_of_scope(app):
