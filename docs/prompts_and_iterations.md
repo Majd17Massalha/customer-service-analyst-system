@@ -139,3 +139,51 @@ Testing:
 Observability:
 - Tool execution logging
 - Latency tracking
+
+---
+
+## Task 7 — Engineering Documentation and Submission Package
+
+### What Was Created
+
+| File | Purpose |
+|---|---|
+| `README.md` | Full project overview, architecture, setup, examples, limitations, future work |
+| `docs/engineering_decisions.md` | Detailed rationale for 11 architectural decisions |
+| `docs/testing_strategy.md` | Test categories, intentional gaps, remaining risks, accepted assumptions |
+| `docs/failure_modes.md` | Query-level, memory, infrastructure, and behavioral failure modes with mitigations |
+| `TASKS.md` | Updated task list reflecting Task 7 completion |
+
+### AI-Assisted Development Reflection
+
+**How Claude Code was used:**
+
+Claude Code was used as the primary implementation agent across all tasks. The prompting approach evolved significantly across the seven tasks:
+
+- **Early tasks (1–3):** Prompts were broad specifications ("implement DuckDB analytics tools with parameterized queries"). Initial outputs required correction for edge cases — for example, the first version of `search_examples` used `LIKE '%keyword%'` string interpolation, which was caught during security review and replaced with `contains()` and parameterized binding.
+
+- **Mid tasks (4–5):** Prompts became more precise as architecture solidified. The LangGraph graph topology was specified explicitly in the prompt (four named branches, START/END topology, trace contract fields). The most significant correction was in the structured dispatch node, which initially attempted to call the wrong tool for "how many X" queries — the regex sub-dispatcher was refined iteratively until all 9 orchestration tests passed.
+
+- **Late tasks (6–7):** Prompts included explicit security requirements and test count targets. The data leakage prevention design (never reading `observation` in session updates) was specified in the prompt after the initial implementation was found to be storing raw DuckDB rows in session files.
+
+**Bugs caught through testing (not trusted blindly):**
+
+1. `search_examples` used `LIKE '%keyword%'` string interpolation (SQL injection risk) → replaced with `contains()` and parameterized binding
+2. `_update_session_from_state()` read `observation` instead of `query` for `last_query` field → caught by manual session file inspection, fixed with truncation cap
+3. Out-of-scope node was attempting tool dispatch for `None` tool inputs → caught by orchestration test `test_out_of_scope_does_not_call_tool`
+4. Router checked structured keywords before out-of-scope keywords, allowing "write me a count" to bypass refusal → routing priority order corrected
+5. Session IDs were used in file paths without sanitization → added `sanitize_session_id()` after security review
+
+**Why outputs were verified instead of trusted blindly:**
+
+Every analytics function output was verified against known fixture data. Tests were written before implementation in several cases (TDD approach), which meant the implementation was required to produce specific values rather than values that "looked right." The session file inspection during manual testing caught the raw-row leakage bug that automated tests had not yet covered — which is why `test_no_raw_rows_in_session` was subsequently added as a permanent regression test.
+
+**How prompts evolved:**
+
+The initial task prompts said "implement X." By Task 6, prompts said "implement X with the following security properties, never reading Y from state, storing only Z in profiles, capping field lengths at N characters." Specificity in prompts correlates directly with first-pass correctness. Vague prompts require more correction loops; precise prompts require fewer.
+
+**Examples of incorrect AI behavior that required correction:**
+
+- Task 2: Generated `search_examples` used string concatenation in SQL. Corrected by explicit security requirement in follow-up prompt.
+- Task 5: Generated structured dispatch node called `count_total_rows` for all structured queries regardless of keyword. Corrected by adding the `_detect_structured_tool` regex sub-dispatcher.
+- Task 6: Generated `_update_session_from_state` stored `observation` text as `last_query`. Corrected after manual inspection of session JSON files.

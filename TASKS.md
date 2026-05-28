@@ -15,18 +15,22 @@
   - `tests/test_memory.py` — 27 tests: sanitization, save/load, security, no raw rows
   - `tests/test_cli.py` — 21 tests: EXIT_COMMANDS, trace format, session extraction, loop behavior
   - 155/155 total tests passing
+- [x] Task 7: Final submission documentation
+  - `README.md` — executive summary, architecture, setup, examples, limitations, future work
+  - `docs/engineering_decisions.md` — 11 architectural decision rationales
+  - `docs/prompts_and_iterations.md` — AI-assisted development reflection and iteration history
+  - `docs/testing_strategy.md` — test categories, intentional gaps, risks, accepted assumptions
+  - `docs/failure_modes.md` — query/memory/infrastructure/behavioral failure modes with mitigations
+  - All 155 tests continue to pass
 
 ## Next
 
-- [ ] Task 7: Persistent follow-up memory behavior
+- [ ] Task 8: Persistent follow-up memory behavior
   - Resolve ambiguous follow-up queries ("show me more", "those") using session context
   - Implement safe context substitution from `last_route`, `last_category`, `last_keyword`
   - Add clarification loop: ask once, retry with resolved context
-- [ ] Task 8: README and run instructions
-  - End-to-end setup guide (dataset ingestion → `python main.py --session demo`)
-  - Architecture diagram
-  - Test and contribution instructions
 - [ ] Task 9 (Optional): Smart RAG extension
   - Semantic retrieval for open-ended queries not served by keyword search
   - Embedding layer over `instruction` column (FAISS or similar)
   - Gated behind an `unstructured_semantic` route; never replaces deterministic analytics
+  - See `docs/engineering_decisions.md` sections 8 and 9 for rationale
