@@ -72,6 +72,17 @@ def _detect_structured_tool(query: str) -> tuple[str, dict]:
             intent = m.group(1) or m.group(2)
             return "count_by_intent", {"intent": intent}
 
+    # Keyword count fallback: "how many X [requests/…]" without "category"/"intent" label.
+    # Extracts the first content word after the count signal and treats it as a category.
+    _COUNT_GENERIC = frozenset({
+        "rows", "records", "entries", "items", "total", "all",
+        "there", "are", "the", "a", "an", "in", "of",
+    })
+    if any(x in q for x in ("how many", "count", "number of")):
+        m = re.search(r"(?:how many|count(?:\s+of)?|number of)\s+(\w+)", q)
+        if m and m.group(1) not in _COUNT_GENERIC:
+            return "count_by_category", {"category": m.group(1).upper()}
+
     # Default: total row count
     return "count_total_rows", {}
 
@@ -90,13 +101,20 @@ def _detect_unstructured_action(query: str) -> tuple[str, dict]:
     """Return (tool_name, params) for an unstructured query. Pure, no side effects."""
     q = query.lower().strip()
 
-    # Explicit "examples of X" pattern
-    m = re.search(r"\bexamples?\s+of\s+(\w+)", q)
+    # Explicit "examples of/about/for/on X" pattern
+    m = re.search(r"\bexamples?\s+(?:of|about|for|on)\s+(\w+)", q)
     if m:
         return "search_examples", {"keyword": m.group(1), "limit": 5}
 
     # Category / intent keyword mention → search by keyword
     m = re.search(r"(?:the\s+)?(\w+)\s+(?:category|intent|pattern)", q)
+    if m:
+        kw = m.group(1)
+        if kw not in _STOPWORDS:
+            return "search_examples", {"keyword": kw, "limit": 5}
+
+    # "summarize/describe/analyze X [noun]" → search by X keyword
+    m = re.search(r"(?:summarize|describe|analyze|explain|review)\s+(\w+)", q)
     if m:
         kw = m.group(1)
         if kw not in _STOPWORDS:

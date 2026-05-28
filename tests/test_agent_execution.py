@@ -179,3 +179,48 @@ def test_trace_contract(graph, test_db):
         assert len(result.get("trace", [])) >= 2, (
             f"trace must have >= 2 entries for {query!r}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Regression: tool-selection bugs found in manual CLI validation
+# ---------------------------------------------------------------------------
+
+def test_regression_how_many_order_requests(graph, test_db):
+    """Bug: 'How many ORDER requests?' dispatched to count_total_rows instead of
+    count_by_category — missing keyword-count fallback when 'category' not in query."""
+    result = _invoke(graph, "How many ORDER requests?", test_db)
+    assert result["route_result"].route == "structured"
+    assert result["selected_tool"] == "count_by_category", (
+        f"expected count_by_category, got {result['selected_tool']!r}"
+    )
+    assert result["tool_input"]["category"] == "ORDER"
+    assert result["observation"] == 2
+    assert "2" in result["final_answer"]
+
+
+def test_regression_show_examples_about(graph, test_db):
+    """Bug: 'Show examples about refund' dispatched to get_top_categories instead of
+    search_examples — examples pattern only matched 'of', not 'about'."""
+    result = _invoke(graph, "Show examples about refund", test_db)
+    assert result["route_result"].route == "unstructured"
+    assert result["selected_tool"] == "search_examples", (
+        f"expected search_examples, got {result['selected_tool']!r}"
+    )
+    assert result["tool_input"]["keyword"] == "refund"
+    assert isinstance(result["observation"], list)
+    assert len(result["observation"]) >= 1
+    assert "Based on dataset examples only" in result["final_answer"]
+
+
+def test_regression_summarize_keyword_requests(graph, test_db):
+    """Bug: 'Summarize cancellation requests' dispatched to get_top_categories instead of
+    search_examples — no path handled 'summarize X [noun]' keyword extraction."""
+    result = _invoke(graph, "Summarize cancellation requests", test_db)
+    assert result["route_result"].route == "unstructured"
+    assert result["selected_tool"] == "search_examples", (
+        f"expected search_examples, got {result['selected_tool']!r}"
+    )
+    assert result["tool_input"]["keyword"] == "cancellation"
+    assert isinstance(result["observation"], list)
+    # No rows contain "cancellation" in the fixture — empty result is correct behaviour
+    assert "Based on dataset examples only" in result["final_answer"]
