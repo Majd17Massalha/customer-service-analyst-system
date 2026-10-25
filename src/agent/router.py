@@ -106,6 +106,7 @@ _OUT_OF_SCOPE_PHRASES: tuple[str, ...] = (
     "write me a story",
     "what is the capital",
     "solve this equation",
+    "population of",
 )
 
 _CLARIFICATION_EXACT: frozenset[str] = frozenset({
@@ -123,6 +124,7 @@ _CLARIFICATION_EXACT: frozenset[str] = frozenset({
     "go on",
     "those",
     "them",
+    "tell me about it",
 })
 
 _CLARIFICATION_PATTERNS: tuple[re.Pattern, ...] = (

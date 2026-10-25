@@ -145,3 +145,49 @@ def search_examples(
         keyword, limit, len(result), time.perf_counter() - t0,
     )
     return result
+
+def get_filtered_examples(
+    category: str | None = None,
+    intent: str | None = None,
+    limit: int = 5,
+    db_path=None,
+) -> list[dict]:
+    """Retrieve examples using structured category/intent filters."""
+
+    if not category and not intent:
+        raise ValueError(
+            "At least one category or intent filter is required"
+        )
+
+    if not isinstance(limit, int) or not 1 <= limit <= 100:
+        raise ValueError("limit must be between 1 and 100")
+
+    path = str(db_path or DB_PATH)
+
+    sql = f"""
+        SELECT instruction, category, intent
+        FROM {TABLE}
+        WHERE (? IS NULL OR UPPER(category) = UPPER(?))
+          AND (? IS NULL OR LOWER(intent) = LOWER(?))
+        ORDER BY instruction
+        LIMIT ?
+    """
+
+    with duckdb.connect(path, read_only=True) as con:
+        rows = con.execute(
+            sql,
+            [
+                category, category,
+                intent, intent,
+                limit,
+            ],
+        ).fetchall()
+
+    return [
+        {
+            "instruction": row[0],
+            "category": row[1],
+            "intent": row[2],
+        }
+        for row in rows
+    ]

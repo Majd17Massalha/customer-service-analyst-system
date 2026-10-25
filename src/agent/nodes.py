@@ -16,6 +16,7 @@ from src.tools.analytics_tools import (
     count_by_intent,
     count_total_rows,
     get_top_categories,
+    get_filtered_examples,
     search_examples,
 )
 
@@ -183,28 +184,66 @@ _STOPWORDS = frozenset({
 
 def _detect_unstructured_action(query: str) -> tuple[str, dict]:
     """Return (tool_name, params) for an unstructured query. Pure, no side effects."""
+
     q = query.lower().strip()
 
-    # Explicit "examples of/about/for/on X" pattern
-    m = re.search(r"\bexamples?\s+(?:of|about|for|on)\s+(\w+)", q)
+    # 1. Explicit examples about a topic -> keyword search
+    m = re.search(r"\bexamples?\s+(?:about|for|on)\s+(\w+)", q)
     if m:
-        return "search_examples", {"keyword": m.group(1), "limit": 5}
+        return "search_examples", {
+            "keyword": m.group(1),
+            "limit": 5,
+        }
 
-    # Category / intent keyword mention → search by keyword
+    # 2. Specific business intents
+    if re.search(
+        r"\b(order cancellation|cancel_order|cancel an? order)\b",
+        q,
+    ):
+        return "get_filtered_examples", {
+            "intent": "cancel_order",
+            "limit": 5,
+        }
+
+    # 3. Refund category
+    if re.search(r"\brefunds?\b", q):
+        return "get_filtered_examples", {
+            "category": "REFUND",
+            "limit": 5,
+        }
+
+    # 4. Other explicit examples -> keyword search
+    m = re.search(r"\bexamples?\s+of\s+(\w+)", q)
+    if m:
+        return "search_examples", {
+            "keyword": m.group(1),
+            "limit": 5,
+        }
+
+    # 5. Category / intent mention
     m = re.search(r"(?:the\s+)?(\w+)\s+(?:category|intent|pattern)", q)
     if m:
         kw = m.group(1)
         if kw not in _STOPWORDS:
-            return "search_examples", {"keyword": kw, "limit": 5}
+            return "search_examples", {
+                "keyword": kw,
+                "limit": 5,
+            }
 
-    # "summarize/describe/analyze X [noun]" → search by X keyword
-    m = re.search(r"(?:summarize|describe|analyze|explain|review)\s+(\w+)", q)
+    # 6. General summarization
+    m = re.search(
+        r"(?:summarize|describe|analyze|explain|review)\s+(\w+)",
+        q,
+    )
     if m:
         kw = m.group(1)
         if kw not in _STOPWORDS:
-            return "search_examples", {"keyword": kw, "limit": 5}
+            return "search_examples", {
+                "keyword": kw,
+                "limit": 5,
+            }
 
-    # Default: top-categories overview
+    # 7. Fallback
     return "get_top_categories", {"limit": 10}
 
 
@@ -219,7 +258,7 @@ def _build_extractive_summary(data: Any, tool: str) -> str:
             return f"{prefix}\nNo categories found in the dataset."
         lines = [f"- {d['category']}: {d['count']} rows" for d in data]
         return prefix + "\n" + "\n".join(lines)
-    if tool == "search_examples":
+    if tool in ("search_examples", "get_filtered_examples"):
         if not data:
             return f"{prefix}\nNo matching examples found in the dataset."
         lines = [
@@ -284,9 +323,20 @@ def node_unstructured_retrieval(state: AgentState) -> dict[str, Any]:
     tool_name, params = _detect_unstructured_action(state["query"])
 
     if tool_name == "search_examples":
-        obs = search_examples(params["keyword"], limit=params.get("limit", 5), db_path=db)
-    else:
+        obs = search_examples(
+            params["keyword"], limit=params.get("limit", 5), db_path=db
+        )
+    elif tool_name == "get_filtered_examples":
+        obs = get_filtered_examples(
+            category=params.get("category"),
+            intent=params.get("intent"),
+            limit=params.get("limit", 5),
+            db_path=db,
+        )
+    elif tool_name == "get_top_categories":
         obs = get_top_categories(limit=params.get("limit", 10), db_path=db)
+    else:
+        raise ValueError(f"Unsupported unstructured tool: {tool_name}")
 
     summary = _build_extractive_summary(obs, tool_name)
 
