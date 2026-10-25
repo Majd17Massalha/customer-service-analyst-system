@@ -159,8 +159,12 @@ def get_filtered_examples(
             "At least one category or intent filter is required"
         )
 
-    if not isinstance(limit, int) or not 1 <= limit <= 100:
-        raise ValueError("limit must be between 1 and 100")
+    if (
+            not isinstance(limit, int)
+            or isinstance(limit, bool)
+            or not 1 <= limit <= 100
+    ):
+        raise ValueError("limit must be an integer between 1 and 100")
 
     path = str(db_path or DB_PATH)
 
@@ -191,3 +195,44 @@ def get_filtered_examples(
         }
         for row in rows
     ]
+
+def get_available_categories(
+    db_path: str | Path = DB_PATH,
+) -> list[str]:
+    """Return all non-empty categories present in the dataset."""
+    con = _connect(db_path)
+    try:
+        rows = con.execute(
+            f"""
+            SELECT DISTINCT TRIM(category) AS value
+            FROM {TABLE}
+            WHERE category IS NOT NULL
+              AND TRIM(category) <> ''
+            ORDER BY value
+            """
+        ).fetchall()
+    finally:
+        con.close()
+
+    return [row[0] for row in rows]
+
+
+def get_available_intents(
+    db_path: str | Path = DB_PATH,
+) -> list[str]:
+    """Return all non-empty intents present in the dataset."""
+    con = _connect(db_path)
+    try:
+        rows = con.execute(
+            f"""
+            SELECT DISTINCT TRIM(intent) AS value
+            FROM {TABLE}
+            WHERE intent IS NOT NULL
+              AND TRIM(intent) <> ''
+            ORDER BY value
+            """
+        ).fetchall()
+    finally:
+        con.close()
+
+    return [row[0] for row in rows]
