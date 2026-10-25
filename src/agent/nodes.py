@@ -42,49 +42,133 @@ def _effective_db(state: AgentState):
 # Structured sub-dispatcher
 # ---------------------------------------------------------------------------
 
+
 def _detect_structured_tool(query: str) -> tuple[str, dict]:
-    """Return (tool_name, params) for a structured query. Pure, no side effects."""
+    """Select a deterministic analytics tool for a structured query.
+
+    Specific category and intent filters take precedence over
+    general dataset counts. Pure function with no side effects.
+    """
     q = query.lower().strip()
 
-    # Top categories
-    if re.search(r"\btop\b", q) and "categor" in q:
-        m = re.search(r"\btop\s+(\d+)\b", q)
-        limit = int(m.group(1)) if m else 10
+    count_request = any(
+        phrase in q
+        for phrase in ("how many", "count", "number of")
+    )
+
+    category_dimension = bool(
+        re.search(r"\bcategor(?:y|ies)\b", q)
+    )
+
+    distribution_request = bool(
+        re.search(r"\b(distribution|breakdown)\b", q)
+    )
+
+    ranking_request = bool(
+        re.search(
+            r"\b(?:most common|most frequent|most frequently|"
+            r"highest frequency|largest category|"
+            r"category with the most)\b",
+            q,
+        )
+    )
+
+    # 1. Category distribution and ranking
+    if category_dimension and (
+        distribution_request or ranking_request
+    ):
+        limit = (
+            1
+            if ranking_request and not distribution_request
+            else 100
+        )
         return "get_top_categories", {"limit": limit}
 
-    # Category count — extract category name appearing before "category"
-    if "categor" in q and any(x in q for x in ("how many", "count", "number of")):
-        m = re.search(
-            r"(?:in\s+(?:the\s+)?|for\s+(?:the\s+)?)(\w+)\s+categor|(\w+)\s+categor",
+    # 2. Top N categories
+    if re.search(r"\btop\b", q) and category_dimension:
+        match = re.search(r"\btop\s+(\d+)\b", q)
+        limit = int(match.group(1)) if match else 10
+        return "get_top_categories", {"limit": limit}
+
+    # 3. Explicit category filter
+    # Examples:
+    # "How many rows are in the ORDER category?"
+    # "How many rows are in the NONEXISTENT category?"
+    if category_dimension and count_request:
+        match = re.search(
+            r"\b(?:in|for|within)\s+(?:the\s+)?"
+            r"([a-z_][a-z0-9_]*)\s+categor(?:y|ies)\b"
+            r"|\b([a-z_][a-z0-9_]*)\s+categor(?:y|ies)\b",
             q,
         )
-        if m:
-            cat = (m.group(1) or m.group(2)).upper()
-            return "count_by_category", {"category": cat}
 
-    # Intent count — extract intent name appearing before "intent"
-    if "intent" in q and any(x in q for x in ("how many", "count", "number of")):
-        m = re.search(
-            r"(?:the\s+|with\s+(?:the\s+)?)(\w+)\s+intent|(\w+)\s+intent",
+        if match:
+            category = (
+                match.group(1) or match.group(2)
+            ).upper()
+
+            return "count_by_category", {
+                "category": category
+            }
+
+    # 4. Explicit intent filter
+    # Example:
+    # "How many rows have the cancel_order intent?"
+    if re.search(r"\bintents?\b", q) and count_request:
+        match = re.search(
+            r"\b(?:the|with(?:\s+the)?)\s+"
+            r"([a-z_][a-z0-9_]*)\s+intent\b"
+            r"|\b([a-z_][a-z0-9_]*)\s+intent\b",
             q,
         )
-        if m:
-            intent = m.group(1) or m.group(2)
-            return "count_by_intent", {"intent": intent}
 
-    # Keyword count fallback: "how many X [requests/…]" without "category"/"intent" label.
-    # Extracts the first content word after the count signal and treats it as a category.
-    _COUNT_GENERIC = frozenset({
-        "rows", "records", "entries", "items", "total", "all",
-        "there", "are", "the", "a", "an", "in", "of",
+        if match:
+            intent = match.group(1) or match.group(2)
+
+            return "count_by_intent", {
+                "intent": intent
+            }
+
+    # 5. General dataset count
+    # Must come AFTER explicit category/intent filters.
+    global_count_pattern = (
+        r"\b(?:total number of|total count of|"
+        r"number of|how many|count of)\s+"
+        r"(?:customer support records|support records|"
+        r"dataset records|dataset rows|"
+        r"rows|records|entries)\b"
+    )
+
+    if re.search(global_count_pattern, q):
+        return "count_total_rows", {}
+
+    # 6. Generic category count
+    # Example: "How many ORDER requests are there?"
+    count_generic = frozenset({
+        "rows", "records", "entries", "items",
+        "total", "all", "there", "are",
+        "the", "a", "an", "in", "of",
+        "customer", "support", "dataset",
     })
-    if any(x in q for x in ("how many", "count", "number of")):
-        m = re.search(r"(?:how many|count(?:\s+of)?|number of)\s+(\w+)", q)
-        if m and m.group(1) not in _COUNT_GENERIC:
-            return "count_by_category", {"category": m.group(1).upper()}
 
-    # Default: total row count
+    if count_request:
+        match = re.search(
+            r"\b(?:how many|count(?:\s+of)?|number of)"
+            r"\s+([a-z_][a-z0-9_]*)\b",
+            q,
+        )
+
+        if match:
+            candidate = match.group(1)
+
+            if candidate not in count_generic:
+                return "count_by_category", {
+                    "category": candidate.upper()
+                }
+
+    # 7. Existing fallback behavior
     return "count_total_rows", {}
+
 
 
 # ---------------------------------------------------------------------------

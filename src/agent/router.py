@@ -52,6 +52,11 @@ _STRUCTURED_PHRASES: tuple[str, ...] = (
     "per intent",
     "what is the distribution",
     "how many are",
+    "most frequent",
+    "most frequently",
+    "highest frequency",
+    "largest category",
+    "category with the most",
 )
 
 _UNSTRUCTURED_PHRASES: tuple[str, ...] = (

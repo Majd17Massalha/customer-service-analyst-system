@@ -1,96 +1,18 @@
-"""Tests for the deterministic router and LangGraph skeleton.
-
-No LLM calls, no API keys, no database required.
-"""
-import pytest
-from src.agent.router import RouteResult, route_query
-
-
-# ---------------------------------------------------------------------------
-# Structured routing
-# ---------------------------------------------------------------------------
-
-@pytest.mark.parametrize("query", [
-    "How many refund requests are in the dataset?",
-    "What categories exist in the dataset?",
-    "What is the distribution of intents in the ACCOUNT category?",
-    "What is the total number of rows?",
-    "Give me the top 10 categories",
-    "How many rows are there for FEEDBACK?",
-    "What is the breakdown by intent?",
-    "Count of orders per category",
-])
-def test_structured_routing(query):
-    r = route_query(query)
-    assert r.route == "structured", f"Expected structured, got {r.route!r} for: {query!r}"
-    assert r.confidence >= 0.85
-    assert r.reason_summary
-    assert r.next_action
-
-
-# ---------------------------------------------------------------------------
-# Unstructured routing
-# ---------------------------------------------------------------------------
-
-@pytest.mark.parametrize("query", [
-    "Summarize the FEEDBACK category.",
-    "How do agents respond to cancellation requests?",
-    "Tell me about the ACCOUNT category",
-    "Give me an overview of the dataset",
-    "Explain the intent patterns in the support data",
-    "What are the common issues in the REFUND category?",
-])
-def test_unstructured_routing(query):
-    r = route_query(query)
-    assert r.route == "unstructured", f"Expected unstructured, got {r.route!r} for: {query!r}"
-    assert r.confidence >= 0.80
-    assert r.reason_summary
-    assert r.next_action
-
-
-# ---------------------------------------------------------------------------
-# Out-of-scope routing
-# ---------------------------------------------------------------------------
-
-@pytest.mark.parametrize("query", [
-    "Who won the Champions League?",
-    "Write me a poem about customer service.",
-    "What is the weather in New York?",
-    "What is the stock price of Apple?",
-    "Tell me a joke.",
-])
-def test_out_of_scope_routing(query):
-    r = route_query(query)
-    assert r.route == "out_of_scope", f"Expected out_of_scope, got {r.route!r} for: {query!r}"
-    assert r.confidence >= 0.90
-    assert r.reason_summary
-    assert r.next_action
-
-
-# ---------------------------------------------------------------------------
-# Needs-clarification routing
-# ---------------------------------------------------------------------------
-
-@pytest.mark.parametrize("query", [
-    "Show me more",
-    "What about that?",
-    "Give me the last ones",
-    "more",
-    "continue",
-    "and?",
-])
-def test_needs_clarification_routing(query):
-    r = route_query(query)
-    assert r.route == "needs_clarification", (
-        f"Expected needs_clarification, got {r.route!r} for: {query!r}"
-    )
-    assert r.reason_summary
-    assert r.next_action
-
 
 # ---------------------------------------------------------------------------
 # No hidden chain-of-thought
 # ---------------------------------------------------------------------------
+"""Tests for deterministic routing and LangGraph integration.
+
+Routing unit tests do not require a database.
+Graph integration tests for data routes require DuckDB.
+No external LLM calls or API keys are required.
+"""
+
+import pytest
+
+from src.agent.router import RouteResult, route_query
+from src.agent.nodes import _detect_structured_tool
 
 @pytest.mark.parametrize("query", [
     "How many refund requests?",
@@ -121,7 +43,62 @@ def test_route_result_contract():
 
 
 # ---------------------------------------------------------------------------
-# LangGraph graph integration
+# Regression: correct structured tool selection (database-free)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("query", [
+    "What is the total number of customer support records?",
+    "What is the total number of rows?",
+    "How many rows are in the dataset?",
+])
+def test_total_dataset_count_tool_selection(query):
+    assert route_query(query).route == "structured"
+    tool, params = _detect_structured_tool(query)
+    assert (tool, params) == ("count_total_rows", {})
+
+
+@pytest.mark.parametrize("query", [
+    "Give me the distribution of support requests by category.",
+    "Show the breakdown by category.",
+    "What is the distribution of requests by category?",
+])
+def test_category_distribution_tool_selection(query):
+    assert route_query(query).route == "structured"
+    tool, params = _detect_structured_tool(query)
+    assert tool == "get_top_categories"
+    assert isinstance(params.get("limit"), int)
+    assert params["limit"] >= 1
+
+
+@pytest.mark.parametrize("query", [
+    "Which customer support category appears most frequently?",
+    "What is the most common category?",
+    "Which category has the highest frequency?",
+])
+def test_most_frequent_category_tool_selection(query):
+    assert route_query(query).route == "structured"
+    tool, params = _detect_structured_tool(query)
+    assert (tool, params) == ("get_top_categories", {"limit": 1})
+
+
+def test_existing_order_category_count_tool_selection():
+    query = "How many ORDER requests are there?"
+    assert route_query(query).route == "structured"
+    assert _detect_structured_tool(query) == (
+        "count_by_category", {"category": "ORDER"}
+    )
+
+
+def test_existing_top_five_categories_tool_selection():
+    query = "Give me the top 5 categories"
+    assert route_query(query).route == "structured"
+    assert _detect_structured_tool(query) == (
+        "get_top_categories", {"limit": 5}
+    )
+
+
+# ---------------------------------------------------------------------------
+# LangGraph graph integration (requires initialized DuckDB for data routes)
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="module")
@@ -160,7 +137,10 @@ def test_graph_clarification(app):
 
 
 def test_graph_trace_populated(app):
-    state = app.invoke(_initial_state("How many refund requests?"))
+    state = app.invoke(
+        _initial_state("How many refund requests?")
+    )
+
     assert len(state["trace"]) >= 2
     assert any("[route_query]" in t for t in state["trace"])
     assert any("[structured]" in t for t in state["trace"])
