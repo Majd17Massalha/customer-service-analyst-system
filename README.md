@@ -1,318 +1,212 @@
-
 <div align="center">
 
 # Customer Service Analyst System
 
-### AI-Assisted Customer Support Analytics
+### LangGraph-Powered Customer Support Analytics Agent
 
 **Python · LangGraph · DuckDB · FastMCP · Pydantic · pytest**
 
-*Transforming customer-support data into reliable, actionable business insights.*
+*Reliable answers to customer-support business questions, backed by validated data tools.*
+
+[Repository](https://github.com/Majd17Massalha/customer-service-analyst-system) · [Planning Components](https://github.com/Majd17Massalha/customer-service-analyst-system/tree/feature/openai-llm-planner)
 
 </div>
 
 ---
 
-## Executive Summary
+## Overview
 
-A modular, business-oriented analytics system designed to translate **natural-language customer-support queries into accurate, data-driven insights**.
+The **Customer Service Analyst System** is a working, modular analytics agent for the Bitext Customer Support dataset. It lets users ask questions in natural language and receive reproducible statistics, relevant examples, and extractive summaries without writing SQL.
 
-The system combines **LangGraph orchestration, deterministic SQL analytics, MCP-enabled tools, bounded memory, and automated evaluation** to support customer-support analysis and business decision-making.
+The system uses **LangGraph** to orchestrate a deterministic workflow and **DuckDB** as the source of truth for numerical results. A separate **FastMCP** interface makes analytics tools available to compatible external clients. Structured planning contracts, validation guardrails, and controlled execution components extend the codebase's agent engineering foundation.
 
-### Key Engineering Capabilities
+### Key Capabilities
 
-- **AI Agent Orchestration:** LangGraph-based routing and execution workflows.
-- **Reliable Analytics:** Parameterized DuckDB queries for reproducible results.
-- **Enterprise Integration:** MCP-enabled analytics tools through FastMCP.
-- **Security & Validation:** Input validation, controlled tool execution, and operational tracing.
-- **Memory & Evaluation:** Bounded session memory and automated regression testing.
-- **Software Quality:** 243 passing automated tests.
+- **Agent orchestration:** LangGraph routes requests to analytics, retrieval, clarification, or refusal paths.
+- **Verified business analytics:** Parameterized DuckDB tools calculate counts, filters, and category/intent distributions.
+- **Tool interoperability:** FastMCP exposes validated analytics operations through a separate server.
+- **Safe execution boundaries:** Typed inputs, constrained tool access, and explicit out-of-scope handling.
+- **Observability and memory:** Operational traces and bounded session/profile metadata.
+- **Testable engineering:** Automated regression, validation, and adversarial test coverage.
 
-**Development Status:** The deterministic analytics workflow is implemented and tested. Structured LLM planning contracts, validation guardrails, and a controlled executor have been developed on a feature branch; end-to-end LLM integration is in progress.
+## Business Problem
 
----
+Customer-support teams need to understand issue volumes, recurring categories, customer intents, and representative requests. Manual analysis requires SQL expertise; unconstrained language-model responses may invent counts or percentages.
 
-## Problem Statement
+**The solution separates natural-language request handling from trusted data execution.** LangGraph chooses an approved workflow; DuckDB computes analytical values; the system returns results with operational trace information. This architecture prioritizes correctness, reproducibility, and maintainability.
 
-Customer-support teams need to analyze customer inquiries, identify recurring issues, and retrieve relevant information without manually writing SQL.
+## Architecture
 
-Traditional workflows can be time-consuming, while unrestricted LLM-generated analytics may produce inaccurate statistics or unsupported conclusions.
+### Operational Agent Workflow
 
-**This project addresses these challenges by combining natural-language interaction with deterministic, verifiable analytics**, enabling reliable analysis of customer-support data to support business decisions.
-
----
-
-## Project Goals
-
-- Translate natural-language business questions into structured analytical workflows.
-- Deliver accurate and reproducible insights through DuckDB and parameterized SQL.
-- Build modular AI agent orchestration with MCP-based tool integration.
-- Apply validation, security boundaries, and controlled tool execution.
-- Support bounded session memory and observable execution traces.
-- Ensure reliability through automated testing and evaluation.
-- Extend the architecture toward LLM-assisted planning without compromising deterministic analytics.
-
----
-
-## Architecture Overview
-
-```
-User Input
-    │
-    ▼
-CLI Layer (main.py + src/cli/chat_loop.py)
-    │  session memory in / out
-    ▼
-LangGraph Orchestration (src/agent/graph.py)
-    │
-    ├─── Deterministic Router (src/agent/router.py)
-    │        keyword classification, no LLM
-    │
-    ├─── structured ──► Analytics Node ──► DuckDB Tools (src/tools/analytics_tools.py)
-    ├─── unstructured ► Retrieval Node  ──► DuckDB + extractive summary
-    ├─── out_of_scope ► Refusal Node    ──► static refusal message
-    └─── clarification ► Clarify Node   ──► ask for more context
-    │
-    ▼
-Trace Contract (route, tool, tool_input, observation, final_answer)
-    │
-    ▼
-CLI Output (operational trace only — no chain-of-thought)
-    │
-    ├─► Session Memory (src/memory/checkpoints.py)  — short-term, JSON
-    └─► User Profile   (src/memory/user_profile.py) — long-term, JSON
+```mermaid
+flowchart TD
+    A["Natural-language question"] --> B["CLI interface"]
+    B --> C["LangGraph orchestration"]
+    C --> D{"Deterministic router"}
+    D -->|Structured analytics| E["Analytics node"]
+    D -->|Examples / summary| F["Retrieval node"]
+    D -->|Out of scope| G["Refusal node"]
+    D -->|Ambiguous| H["Clarification node"]
+    E --> I["Validated DuckDB tools"]
+    F --> I
+    I --> J["Answer and operational trace"]
+    G --> J
+    H --> J
+    J --> K["CLI output"]
+    C -.-> L["Session and profile memory"]
 ```
 
-### MCP Boundary
+**Implementation map:**
 
-`src/mcp/server.py` exposes the same DuckDB analytics tools through a FastMCP server. This layer is **independent of the CLI runtime** — it can be started separately to allow external tools, LangChain agents, or IDE integrations to call the analytics functions over the MCP protocol with Pydantic-validated inputs.
+| Responsibility | Module |
+| --- | --- |
+| CLI entry point | `main.py` |
+| Interactive CLI | `src/cli/chat_loop.py` |
+| LangGraph workflow | `src/agent/graph.py` |
+| Request routing | `src/agent/router.py` |
+| DuckDB analytics | `src/tools/analytics_tools.py` |
+| MCP server | `src/mcp/server.py` |
+| Session persistence | `src/memory/checkpoints.py` |
+| Profile persistence | `src/memory/user_profile.py` |
 
-### LangGraph Orchestration
+The operational routing workflow uses deterministic logic; supported analytical queries do not require an external LLM API.
 
-The LangGraph `StateGraph` has a single conditional fan-out:
+### Structured Planning and Execution Design
 
+The [`feature/openai-llm-planner`](https://github.com/Majd17Massalha/customer-service-analyst-system/tree/feature/openai-llm-planner) branch contains **typed `AgentPlan` contracts**, **plan-validation guardrails**, and a **controlled tool executor**. These components define how candidate plans are checked before approved analytics tools can be invoked.
+
+```mermaid
+flowchart TD
+    A["Candidate structured plan"] --> B["Typed AgentPlan contract"]
+    B --> C["Plan validation guardrails"]
+    C --> D{"Plan accepted?"}
+    D -->|Yes| E["Controlled tool executor"]
+    D -->|No| F["Reject or request clarification"]
+    E --> G["Approved analytics tools"]
+    G --> H["Database-backed results"]
 ```
-START → route_query → {structured | unstructured | out_of_scope | clarification} → END
-```
 
-Each branch is a standalone node that populates the full trace contract before returning. No node shares mutable state with another. The graph is compiled once at import time and invoked per query.
+**Architecture boundary:** The diagram documents the structured plan-validation/execution components on the feature branch. It does not imply that LLM-generated plans are already connected to the primary CLI workflow. Model-driven plan generation is an optional enhancement to the operational deterministic agent.
 
----
+### MCP Integration
 
-## Why Deterministic Analytics Over Pure LLM Reasoning
+`src/mcp/server.py` provides an independent **FastMCP** server for the analytics tools, with Pydantic-validated inputs. Compatible MCP clients can use this boundary to call the available tools; the repository does not claim a live third-party customer deployment.
 
-LLMs do not count reliably. Given a corpus of 26,872 rows across multiple intent and category dimensions, a language model asked "how many billing inquiries are there?" will produce a plausible-sounding but unverifiable number. DuckDB with a parameterized `GROUP BY` query is deterministic, fast, and auditable. The architecture enforces this boundary structurally: numerical answers can only originate from analytics tool return values, never from the model's own generation.
+## Reliability, Security, and Governance
 
----
+| Concern | Engineering control |
+| --- | --- |
+| Incorrect numerical claims | Numerical answers originate from DuckDB operations |
+| SQL injection | Parameterized queries and validated inputs |
+| Unsupported questions | Explicit refusal and clarification routes |
+| Unexpected plan actions | Typed plan contract, validation rules, approved tool execution |
+| Session path abuse | Sanitized session identifiers |
+| Sensitive profile storage | Restricted structured profile fields, excluding raw observations |
+| Debugging and review | Operational traces with route, tool, input, observation, and answer fields |
+| Regression risk | Automated tests and adversarial query scenarios |
 
-## Security and Privacy Decisions
-
-| Risk | Mitigation |
-|---|---|
-| SQL injection via user input | Parameterized DuckDB queries; no string concatenation into SQL |
-| Raw dataset rows in long-term memory | `update_profile_from_state()` never reads `observation`; only reads `category`/`intent` from `tool_input` |
-| Sensitive user input in profiles | `_NEVER_STORE` set blocks `api_key`, `token`, `password`, `secret`, `credential`, `email`, `phone`, `ssn`, `raw_query`, `dataset_row` |
-| Session ID path traversal | `sanitize_session_id()` strips `/`, `\`, `.`, `@`, and all non-alphanumeric chars; caps at 64 chars |
-| Long free-text query storage | `last_query` truncated to 500 chars before persistence |
-| Chain-of-thought exposure | Internal `trace` list never printed; CLI prints only named operational fields |
-| Memory files in git | `outputs/` is in `.gitignore` |
-
----
+These controls support robust local engineering; they are not a claim of external security certification or multi-tenant production deployment.
 
 ## Memory Design
 
-**Short-term (session):** `src/memory/checkpoints.py`
-- Stores metadata about the last query: route, tool name, category filter, intent filter, keyword, result offset
-- JSON file per session ID under `outputs/memory/sessions/`
-- Corrupted files fall back to a fresh state with a warning log entry
-- Never stores raw query text beyond 500 chars; never stores observation data
+- **Session memory:** `src/memory/checkpoints.py` persists bounded interaction metadata as local JSON files.
+- **Profile memory:** `src/memory/user_profile.py` records selected structured preferences and filters, not raw dataset observations.
+- **Storage:** Local files under `outputs/memory/`; session IDs identify local state rather than authenticated users.
 
-**Long-term (profile):** `src/memory/user_profile.py`
-- Stores distilled non-sensitive facts: preferred categories, frequent intents, preferred output style
-- JSON file per session ID under `outputs/memory/profiles/`
-- Written only from structured `tool_input` fields; never written from free text, observations, or query content
+## Quick Start
 
----
-
-## Installation
-
-**Requirements:** Python 3.10+
+**Prerequisites:** Python 3.10+ and Git.
 
 ```bash
-git clone <repo-url>
-cd customer_service_analyst_agent
-pip install -r requirements.txt
+git clone https://github.com/Majd17Massalha/customer-service-analyst-system.git
+cd customer-service-analyst-system
+python -m venv .venv
 ```
 
----
+Activate the virtual environment:
 
-## Ingest the Dataset
+**Windows PowerShell**
 
-Downloads the Bitext Customer Support dataset from Hugging Face and persists it to a local DuckDB file.
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+**Linux / macOS**
 
 ```bash
+source .venv/bin/activate
+```
+
+Install dependencies, ingest data, and run the agent:
+
+```bash
+python -m pip install -r requirements.txt
 python -m src.data.ingest
-```
-
-This creates `outputs/customer_support.duckdb` containing the `customer_support_train` table (26,872 rows).
-
----
-
-## Run Tests
-
-```bash
-pytest tests/ -v
-```
-
-All 155 tests run without API keys, external services, or network access. Each test uses an isolated in-memory or `tmp_path` DuckDB fixture.
-
----
-
-## Start the CLI
-
-```bash
 python main.py --session demo
 ```
 
-Replace `demo` with any alphanumeric session identifier. Session state is persisted across restarts.
+The ingestion step retrieves the **Bitext Customer Support** dataset from Hugging Face and creates a local DuckDB database in `outputs/`. The documented snapshot contains **26,872 synthetic support records**. The initial download requires an internet connection.
 
----
+### MCP Server
 
-## Start the MCP Server
+Run the MCP server separately from the CLI:
 
 ```bash
 python -m src.mcp.server
 ```
 
-The FastMCP server starts and exposes the analytics tools over the MCP protocol. The server is independent of the CLI runtime.
+Connect it using the configuration supported by your MCP client.
 
----
+## Example Business Questions
 
-## Example CLI Session
+| Example question | System behavior |
+| --- | --- |
+| How many total rows are there? | Count records using DuckDB |
+| How many billing queries are there? | Apply a category filter and return a count |
+| How many cancellation intents exist? | Count matching intents |
+| What are the top categories? | Return category distribution |
+| Show me examples about refunds | Retrieve matching support examples |
+| Summarize shipping complaints | Produce an extractive summary from retrieved records |
+| What is the weather in Paris? | Return an out-of-scope response |
 
-```
-$ python main.py --session analyst1
+These are illustrative supported-query examples, not copied CLI output or measured performance results.
 
-Route     : structured
-Confidence: 0.90
-Tool      : count_total_rows
-Tool Input: {}
-Observation: 26872 (truncated)
-Answer    : The dataset contains 26,872 support interactions.
+## Testing and Evaluation
 
-> How many billing queries are there?
+Run the automated suite:
 
-Route     : structured
-Confidence: 0.90
-Tool      : count_by_category
-Tool Input: {"category": "billing"}
-Observation: 3200 (truncated)
-Answer    : There are 3,200 billing queries in the dataset.
-
-> What is the weather in Paris?
-
-Route     : out_of_scope
-Confidence: 0.95
-Answer    : I can only answer questions about the customer support dataset. That question is outside my scope.
-
-> exit
+```bash
+python -m pytest tests/ -q
 ```
 
----
+**Most recently reported result:** **243 passing tests** on the `feature/openai-llm-planner` branch. Test totals may vary by branch or subsequent commits; the current result should be checked before sharing the repository.
 
-## Supported Query Examples
+The engineering workflow uses regression tests, adversarial prompts, security-oriented validation, and operational traces to examine routing and tool behavior. LLM-as-a-Judge templates, where present, are evaluation scaffolding rather than measured model-quality results.
 
-| Query | Route | Tool |
-|---|---|---|
-| How many total rows are there? | structured | count_total_rows |
-| How many billing queries are there? | structured | count_by_category |
-| How many cancellation intents exist? | structured | count_by_intent |
-| What are the top categories? | structured | get_top_categories |
-| Show me examples about refunds | unstructured | search_examples |
-| Summarize shipping complaints | unstructured | search_examples |
+## Design Decisions and Scope
 
----
+- **Deterministic numerical analytics:** Database operations—not generated prose—produce counts and distributions.
+- **Extractive text summaries:** Retrieval-based summarization is used for the current runtime.
+- **Static sample data:** The Bitext dataset is synthetic and does not represent a live support integration.
+- **Local persistence:** DuckDB and JSON memory are appropriate for a local demonstrator, rather than a distributed multi-tenant service.
+- **Clear execution boundaries:** Structured planning components validate proposed actions before execution; the CLI's operational workflow remains deterministic.
 
-## Refused Query Examples
+## Continuous Improvement & Roadmap
 
-| Query | Reason |
-|---|---|
-| What is the weather in Paris? | Out-of-scope domain |
-| Write me a poem about returns | Out-of-scope task type |
-| What is the stock price of Amazon? | Out-of-scope domain |
-| Who won the Champions League? | Out-of-scope domain |
+The working analytics agent provides a foundation for further capabilities:
 
----
+1. **Model-assisted planning:** Connect LLM-generated structured plans to the existing plan contract, validation rules, and controlled executor, with end-to-end tests.
+2. **Evaluation and benchmarking:** Quantify routing quality, tool selection, failure handling, latency, and cost on a reproducible benchmark set.
+3. **Semantic retrieval:** Add embedding-based exploration of support text while preserving DuckDB as the authority for numerical answers.
+4. **Deployment capabilities:** Add authentication, managed storage, monitoring, and deployment automation for larger-scale environments.
+5. **Business reporting:** Explore exportable reports, time-based analysis with enriched data, and dashboard integration.
 
-## Limitations
+## AI-Assisted Engineering Process
 
-- No real-time data: the dataset is a static Bitext snapshot (26,872 synthetic rows)
-- No LLM-backed summarization: unstructured answers are extractive, not generative
-- No semantic search by design: the current system intentionally uses deterministic keyword-based retrieval instead of embedding-based semantic search.
-- Limited conversational continuity: the system persists lightweight session metadata, but does not yet support deep conversational reasoning or semantic long-term memory.
-- No authentication: sessions are identified by user-supplied string IDs
-- No horizontal scale: single-process, single-file DuckDB
+Claude Code was used as a development copilot for implementation support. Architectural decisions and code changes were reviewed against design boundaries and validated through testing and CLI checks. Use of an AI coding assistant is distinct from the runtime's deterministic query-processing design.
 
 ---
 
-## Future Work
-
-### Smart RAG Extension (Hybrid Architecture)
-
-A future semantic layer would complement the deterministic analytics layer without replacing it:
-
-- **Structured queries** (counts, filters, distributions) → DuckDB exact tools (unchanged)
-- **Exploratory/semantic queries** ("what do users complain about most?") → embedding-based retrieval over `instruction` + `response` column content
-- Each dataset row becomes one semantic document with metadata fields (`category`, `intent`, `flags`)
-- Retrieval gates on a new `unstructured_semantic` route; statistical routes are never replaced by RAG
-- Counts and statistics must never use RAG — hallucinated counts are a hard failure mode
-
-### Plan Mode (Multi-Step Execution)
-
-A planner node could be introduced upstream of the current router for complex multi-step queries:
-- `planner_node` decomposes a query into a sequence of tool calls
-- `executor_node` runs each step against deterministic tools in order
-- The planner is constrained to tool calls; it cannot bypass input validation or execute arbitrary code
-- All existing security and parameterization guarantees apply unchanged
-
-### Additional Capabilities
-
-- Timestamp-based filtering (requires dataset enrichment)
-- Trend analysis across intent distribution over time
-- Exportable analytics reports (CSV, JSON)
-- Multi-session aggregation for team-level dashboards
-
-
-## AI-Assisted Development
-
-Claude Code was used as an engineering copilot rather than an autonomous generator.
-
-All major architectural and implementation changes were:
-
-* reviewed manually
-* validated through regression tests
-* verified through CLI execution
-* audited for architectural consistency and security boundaries
-
-Incorrect AI-generated behavior was intentionally preserved in the development history as part of the validation process. For example:
-
-* a routing bug incorrectly mapped "How many ORDER requests?" to `count_total_rows`
-* manual validation identified the regression
-* regression tests were added before the fix was accepted
-
-This workflow emphasized deterministic validation over blind acceptance of AI-generated code.
-
-
-## Evaluation & Governance
-
-The project includes:
-
-* human evaluation datasets
-* adversarial query testing
-* security validation
-* governance documentation
-* operational trace auditing
-* failure-mode analysis
-* LLM-as-a-Judge evaluation templates (non-executed, advisory only)
-
-Deterministic analytics remain the source of truth for all numerical outputs.
+**Repository:** https://github.com/Majd17Massalha/customer-service-analyst-system  
+**Structured planning branch:** https://github.com/Majd17Massalha/customer-service-analyst-system/tree/feature/openai-llm-planner
