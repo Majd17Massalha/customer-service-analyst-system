@@ -1,40 +1,56 @@
-# Customer Service Analyst Agent
 
-A production-oriented AI analyst agent for the Bitext Customer Support dataset. The system answers structured analytical questions (counts, distributions, filters) and open-ended summarization requests deterministically, while explicitly refusing out-of-scope queries and requesting clarification for ambiguous input.
+<div align="center">
+
+# Customer Service Analyst System
+
+### AI-Assisted Customer Support Analytics
+
+**Python · LangGraph · DuckDB · FastMCP · Pydantic · pytest**
+
+*Transforming customer-support data into reliable, actionable business insights.*
+
+</div>
 
 ---
 
 ## Executive Summary
 
-This system routes natural-language queries to one of four execution paths — structured analytics, unstructured summarization, out-of-scope refusal, or clarification request — using a deterministic keyword-based router with no LLM dependency at the routing or analytics layer.
+A modular, business-oriented analytics system designed to translate **natural-language customer-support queries into accurate, data-driven insights**.
 
-Numerical answers are computed exclusively by DuckDB. Natural-language response formatting and extractive summarization are handled locally without external LLM API calls.
+The system combines **LangGraph orchestration, deterministic SQL analytics, MCP-enabled tools, bounded memory, and automated evaluation** to support customer-support analysis and business decision-making.
 
-The architecture emphasizes:
+### Key Engineering Capabilities
 
-* deterministic analytics
-* security and governance boundaries
-* operational observability
-* bounded memory
-* adversarial robustness
-* validation-driven AI engineering
+- **AI Agent Orchestration:** LangGraph-based routing and execution workflows.
+- **Reliable Analytics:** Parameterized DuckDB queries for reproducible results.
+- **Enterprise Integration:** MCP-enabled analytics tools through FastMCP.
+- **Security & Validation:** Input validation, controlled tool execution, and operational tracing.
+- **Memory & Evaluation:** Bounded session memory and automated regression testing.
+- **Software Quality:** 243 passing automated tests.
+
+**Development Status:** The deterministic analytics workflow is implemented and tested. Structured LLM planning contracts, validation guardrails, and a controlled executor have been developed on a feature branch; end-to-end LLM integration is in progress.
 
 ---
 
 ## Problem Statement
 
-Customer service analysts need to interrogate large support datasets without writing SQL. Naive LLM-based answers are unreliable for numerical queries: LLMs hallucinate counts, percentages, and distributions. This system enforces a hard boundary: any question with a numerical answer goes through a verified analytics engine, not the language model.
+Customer-support teams need to analyze customer inquiries, identify recurring issues, and retrieve relevant information without manually writing SQL.
+
+Traditional workflows can be time-consuming, while unrestricted LLM-generated analytics may produce inaccurate statistics or unsupported conclusions.
+
+**This project addresses these challenges by combining natural-language interaction with deterministic, verifiable analytics**, enabling reliable analysis of customer-support data to support business decisions.
 
 ---
 
 ## Project Goals
 
-- Deterministic, reproducible analytics over the Bitext support dataset
-- Natural-language routing with no external API calls at routing time
-- Persistent session and profile memory across conversations
-- Structured observability: every route decision and tool call is logged
-- Production-style security: parameterized queries, input validation, no data leakage
-- Modular, testable architecture with 232 passing tests
+- Translate natural-language business questions into structured analytical workflows.
+- Deliver accurate and reproducible insights through DuckDB and parameterized SQL.
+- Build modular AI agent orchestration with MCP-based tool integration.
+- Apply validation, security boundaries, and controlled tool execution.
+- Support bounded session memory and observable execution traces.
+- Ensure reliability through automated testing and evaluation.
+- Extend the architecture toward LLM-assisted planning without compromising deterministic analytics.
 
 ---
 
